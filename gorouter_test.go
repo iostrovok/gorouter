@@ -53,9 +53,9 @@ func TestServer_1(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	go func(ctx context.Context) {
-		defer wg.Done()
 		err := g.Run(ctx, ":8081")
 		assert.Nil(t, err)
+		wg.Done()
 	}(ctx)
 
 	res, err := http.Get("http://localhost:8081/")
