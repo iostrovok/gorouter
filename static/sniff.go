@@ -289,27 +289,30 @@ func (mp4Sig) match(data []byte, firstNonWS int) string {
 type quicktimeSig struct{}
 
 func (quicktimeSig) match(data []byte, firstNonWS int) string {
-	// https://mimesniff.spec.whatwg.org/#signature-for-mp4
-	// c.f. section 6.2.1
 	if len(data) < 12 {
 		return ""
 	}
+
 	boxSize := int(binary.BigEndian.Uint32(data[:4]))
 	if len(data) < boxSize || boxSize%4 != 0 {
 		return ""
 	}
+
 	if !bytes.Equal(data[4:8], mp4ftype) {
 		return ""
 	}
+
 	for st := 8; st < boxSize; st += 4 {
 		if st == 12 {
 			// Ignores the four bytes that correspond to the version number of the "major brand".
 			continue
 		}
-		if bytes.Equal(data[st:st+3], qt4) {
-			return "video/mp4"
+
+		if bytes.Equal(data[st:st+2], qt4) {
+			return "video/quicktime"
 		}
 	}
+
 	return ""
 }
 

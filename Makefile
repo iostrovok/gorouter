@@ -22,6 +22,13 @@ test: ## Run tests
 	go tool cover -html=coverage.out -o coverage.html
 	rm coverage.out
 
+
+test-top: ## Run tests
+	rm -f coverage.out coverage.html
+	go test -cover -coverprofile=$(PWD)/coverage.out ./
+	go tool cover -html=coverage.out -o coverage.html
+	rm coverage.out
+
 # full cleaning. Don't use it: it removes outside golang packages for all projects
 clean: ## Remove build artifacts
 	@echo "======================================================================"
