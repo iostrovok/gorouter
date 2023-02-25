@@ -1,2 +1,2 @@
 # gorouter
-simple test for http router with go 
+simple router for http router for "github.com/valyala/fasthttp". support global / local (request) context
