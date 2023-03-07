@@ -16,7 +16,7 @@ func multyPeekArray(in [][]byte) []string {
 }
 
 func TestTree(t *testing.T) {
-	t.Skip("AAA")
+	// t.Skip("AAA")
 	tr := newTree()
 	assert.NotNil(t, tr)
 
@@ -41,7 +41,7 @@ func TestTree(t *testing.T) {
 }
 
 func TestSplitPath(t *testing.T) {
-	t.Skip("AAA")
+	// t.Skip("AAA")
 	data := map[string][]string{
 		"":        {"/"},
 		"/":       {"/"},
@@ -57,7 +57,7 @@ func TestSplitPath(t *testing.T) {
 }
 
 func TestTreeTop1(t *testing.T) {
-	t.Skip("AAA")
+	// t.Skip("AAA")
 	tr := newTree()
 	assert.NotNil(t, tr)
 
@@ -86,7 +86,7 @@ func TestTreeTop1(t *testing.T) {
 }
 
 func TestTreeTop2(t *testing.T) {
-	t.Skip("AAA")
+	// t.Skip("AAA")
 	tr := newTree()
 	assert.NotNil(t, tr)
 
@@ -109,7 +109,7 @@ func TestTreeTop2(t *testing.T) {
 }
 
 func TestTreeLevel1_0(t *testing.T) {
-	t.Skip("AAA")
+	// t.Skip("AAA")
 	tr := newTree()
 	assert.NotNil(t, tr)
 
@@ -149,7 +149,7 @@ func TestTreeLevel1_0(t *testing.T) {
 }
 
 func TestTreeLevel1_1(t *testing.T) {
-	t.Skip("AAA")
+	// t.Skip("AAA")
 	tr := newTree()
 	assert.NotNil(t, tr)
 
@@ -186,7 +186,7 @@ func TestTreeLevel1_1(t *testing.T) {
 }
 
 func TestTreeUrlIDs_0(t *testing.T) {
-	t.Skip("AAA")
+	// t.Skip("AAA")
 	tr := newTree()
 	assert.NotNil(t, tr)
 
@@ -212,7 +212,7 @@ func TestTreeUrlIDs_0(t *testing.T) {
 }
 
 func TestTreeUrlIDs_1(t *testing.T) {
-	t.Skip("AAA")
+	// t.Skip("AAA")
 	tr := newTree()
 	assert.NotNil(t, tr)
 
@@ -240,7 +240,7 @@ func TestTreeUrlIDs_1(t *testing.T) {
 }
 
 func TestTreeUrlIDs_2(t *testing.T) {
-	t.Skip("AAA")
+	// t.Skip("AAA")
 	tr := newTree()
 	assert.NotNil(t, tr)
 
@@ -291,7 +291,7 @@ func TestTreeUrlIDs_2(t *testing.T) {
 }
 
 func TestTreeUrlIDs_3(t *testing.T) {
-	t.Skip("AAA")
+	// t.Skip("AAA")
 	tr := newTree()
 	assert.NotNil(t, tr)
 
@@ -339,7 +339,7 @@ func TestTreeUrlIDs_3(t *testing.T) {
 }
 
 func TestTreeUrlID_4(t *testing.T) {
-	t.Skip("AAA")
+	// t.Skip("AAA")
 	tr := newTree()
 	assert.NotNil(t, tr)
 

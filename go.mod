@@ -5,9 +5,9 @@ go 1.19
 require (
 	github.com/json-iterator/go v1.1.12
 	github.com/pkg/errors v0.9.1
-	github.com/stretchr/testify v1.8.0
-	github.com/valyala/fasthttp v1.41.0
-	golang.org/x/sync v0.0.0-20220929204114-8fcdb60fdcc0
+	github.com/stretchr/testify v1.8.2
+	github.com/valyala/fasthttp v1.44.0
+	golang.org/x/sync v0.1.0
 )
 
 require (
