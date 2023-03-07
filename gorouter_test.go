@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/sync/errgroup"
 )
 
 type TestHandler struct {
@@ -29,6 +30,8 @@ func newIH(a string) *TestHandler {
 }
 
 func TestServer_1(t *testing.T) {
+	//t.Skip("BBB")
+
 	g := New()
 
 	set := Set("")
@@ -48,21 +51,20 @@ func TestServer_1(t *testing.T) {
 	routerB.Use(MethodGet, "/", newIH("for MethodGet '/'"))
 	routerB.Use(MethodGet, "/a", newIH("for MethodGet '/a'"))
 
-	ctx, cancel := context.WithCancel(context.Background())
-
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func(ctx context.Context) {
-		err := g.Run(ctx, ":8081")
-		assert.Nil(t, err)
-		wg.Done()
-	}(ctx)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*1)
+	wg, ctxEr := errgroup.WithContext(ctx)
+	wg.Go(func() error {
+		return g.Run(ctxEr, ":8081")
+	})
 
 	res, err := http.Get("http://localhost:8081/")
-	fmt.Printf("TreeResult: %+v\n\n", res)
+	fmt.Printf("TreeResult-2: %+v\n\n", res)
 	fmt.Printf("err: %+v\n\n", err)
-	cancel()
-	wg.Wait()
+	assert.NotNil(t, res)
+	assert.Nil(t, err)
 
-	assert.Nil(t, nil)
+	//cancel()
+	assert.Nil(t, wg.Wait())
+
+	assert.Nil(t, g.Server().Shutdown())
 }

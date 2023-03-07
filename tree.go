@@ -31,14 +31,14 @@ func newTree() *Tree {
 	}
 }
 
-func (node *Node) nextNodes(path, urlId string) []*Node {
+func nextNodes(path, urlId string, children []*Node) []*Node {
 	if urlId != "" {
-		return node.Children[:]
+		return children[:]
 	}
 
-	for j := range node.Children {
-		if node.Children[j].Path == path {
-			return []*Node{node.Children[j]}
+	for j := range children {
+		if children[j].Path == path {
+			return []*Node{children[j]}
 		}
 	}
 
@@ -197,7 +197,7 @@ func getUrlID(p string) (string, string) {
 }
 
 func (t *Tree) _add(node *Node, method Method, paths []string, set *HandlerSet) {
-	next := node.nextNodes(paths[0], node.UrlId)
+	next := nextNodes(paths[0], node.UrlId, node.Children)
 
 	// final point, need to set up HandlerSet
 	if len(paths) == 1 {
