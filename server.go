@@ -2,6 +2,7 @@ package gorouter
 
 import (
 	"context"
+	"io"
 	"os"
 	"regexp"
 
@@ -25,6 +26,9 @@ type Server struct {
 
 	logConfig *config.Config
 	initCtx   InitCtx
+
+	// shutdownTimeOut is max time for shutdown server in millisecond
+	shutdownTimeOut int
 
 	serverName string
 }
@@ -52,6 +56,24 @@ func (server *Server) ServerName() string {
 
 func (server *Server) SetServerName(name string) *Server {
 	server.serverName = name
+	return server
+}
+
+func (server *Server) ShutdownTimeOut() int {
+	return server.shutdownTimeOut
+}
+
+func (server *Server) SetShutdownTimeOut(shutdownTimeOut int) *Server {
+	server.shutdownTimeOut = shutdownTimeOut
+	return server
+}
+
+func (server *Server) LoggerWriter() io.Writer {
+	return server.logConfig.Writer()
+}
+
+func (server *Server) SetLoggerWriter(loggerWriter io.Writer) *Server {
+	server.logConfig.SetWriter(loggerWriter)
 	return server
 }
 

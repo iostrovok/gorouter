@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/valyala/fasthttp"
@@ -15,6 +16,7 @@ import (
 	"github.com/iostrovok/gorouter/logger"
 )
 
+// Run starts the server. it the main function of the server.
 func (server *Server) Run(ctx context.Context, add string, addr ...string) error {
 	address := resolveAddress(append([]string{add}, addr...))
 	ln, err := net.Listen("tcp", address)
@@ -41,15 +43,24 @@ func (server *Server) Run(ctx context.Context, add string, addr ...string) error
 		ch := make(chan os.Signal, 1)
 		signal.Notify(ch, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGINT)
 		select {
-		case <-ctx.Done():
-			return errors.Wrap(server.srv.Shutdown(), context.Canceled.Error())
+		case <-errCtx.Done():
+			// global (main) context is done. Stop.
+			var err error
+			if server.shutdownTimeOut > 0 {
+				ctx, _ := context.WithTimeout(context.Background(), //nolint:govet
+					time.Duration(server.shutdownTimeOut)*time.Millisecond)
+				err = server.srv.ShutdownWithContext(ctx)
+			} else {
+				err = server.srv.Shutdown()
+			}
+			return errors.Wrap(err, context.Canceled.Error())
 		case sig := <-ch:
-			return errors.Wrap(server.srv.Shutdown(), "server shutdown: "+sig.String())
+			// We received an interrupt signal, shut down.
+			return errors.Wrap(server.srv.ShutdownWithContext(ctx), "server shutdown: "+sig.String())
 		}
 	})
 
 	errGroup.Go(func() error {
-		// We received an interrupt signal, shut down.
 		return server.srv.Serve(ln)
 	})
 
