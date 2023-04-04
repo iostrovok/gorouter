@@ -10,7 +10,7 @@ import (
 	"github.com/valyala/fasthttp"
 
 	"github.com/iostrovok/gorouter"
-	"github.com/iostrovok/gorouter/cmd/static_video/fileouter"
+	"github.com/iostrovok/gorouter/examples/static_video/fileouter"
 	"github.com/iostrovok/gorouter/logger/level"
 	"github.com/iostrovok/gorouter/static"
 )
