@@ -2,7 +2,6 @@ package gorouter
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -58,8 +57,6 @@ func TestServer_1(t *testing.T) {
 	})
 
 	res, err := http.Get("http://localhost:8081/")
-	fmt.Printf("TreeResult-2: %+v\n\n", res)
-	fmt.Printf("err: %+v\n\n", err)
 	assert.NotNil(t, res)
 	assert.Nil(t, err)
 

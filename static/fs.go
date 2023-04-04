@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/valyala/fasthttp"
+	//"github.com/iostrovok/gorouter/internal/textproto"
 )
 
 // A Dir implements FileSystem using the native file system restricted to a
@@ -270,7 +271,7 @@ func serveContent(ctx *fasthttp.RequestCtx, name string, modTime time.Time, size
 		ranges, err := parseRange(rangeReq, size)
 		if err != nil {
 			if err == errNoOverlap {
-				ctx.Response.Header.Set("Content-Range", fmt.Sprintf("bytes */%d", size))
+				ctx.Response.Header.Set("Content-Range", "bytes */"+strconv.FormatInt(size, 10))
 			}
 			Error(ctx, err.Error(), fasthttp.StatusRequestedRangeNotSatisfiable)
 			return err
@@ -866,7 +867,11 @@ type httpRange struct {
 }
 
 func (r httpRange) contentRange(size int64) string {
-	return fmt.Sprintf("bytes %d-%d/%d", r.start, r.start+r.length-1, size)
+	//return fmt.Sprintf("bytes %d-%d/%d", r.start, r.start+r.length-1, size)
+	return fmt.Sprintf("bytes " +
+		strconv.FormatInt(r.start, 10) + "-" +
+		strconv.FormatInt(r.start+r.length-1, 10) + "/" +
+		strconv.FormatInt(size, 10))
 }
 
 func (r httpRange) mimeHeader(contentType string, size int64) textproto.MIMEHeader {
@@ -876,29 +881,41 @@ func (r httpRange) mimeHeader(contentType string, size int64) textproto.MIMEHead
 	}
 }
 
+// errNoOverlap is returned by serveContent's parseRange
+// if first-byte-pos of all byte-range-spec values is greater than the content size.
+var errInvalidRange = errors.New("invalid range")
+
+const bBytes = "bytes="
+
+var bBytesLen = len(bBytes)
+
 // parseRange parses a Range header string as per RFC 7233.
 // errNoOverlap is returned if none of the ranges overlap.
 func parseRange(s string, size int64) ([]httpRange, error) {
 	if s == "" {
 		return nil, nil // header not present
 	}
-	const b = "bytes="
-	if !strings.HasPrefix(s, b) {
-		return nil, errors.New("invalid range")
+
+	if !strings.HasPrefix(s, bBytes) {
+		return nil, errInvalidRange
 	}
+
 	var ranges []httpRange
 	noOverlap := false
-	for _, ra := range strings.Split(s[len(b):], ",") {
+	for _, ra := range strings.Split(s[bBytesLen:], ",") {
 		ra = textproto.TrimString(ra)
 		if ra == "" {
 			continue
 		}
+
 		start, end, ok := strings.Cut(ra, "-")
 		if !ok {
-			return nil, errors.New("invalid range")
+			return nil, errInvalidRange
 		}
+
 		start, end = textproto.TrimString(start), textproto.TrimString(end)
 		var r httpRange
+
 		if start == "" {
 			// If no start is specified, end specifies the
 			// range start relative to the end of the file,
@@ -906,11 +923,11 @@ func parseRange(s string, size int64) ([]httpRange, error) {
 			// which has to be a non-negative integer as per
 			// RFC 7233 Section 2.1 "Byte-Ranges".
 			if end == "" || end[0] == '-' {
-				return nil, errors.New("invalid range")
+				return nil, errInvalidRange
 			}
 			i, err := strconv.ParseInt(end, 10, 64)
 			if i < 0 || err != nil {
-				return nil, errors.New("invalid range")
+				return nil, errInvalidRange
 			}
 			if i > size {
 				i = size
@@ -922,12 +939,14 @@ func parseRange(s string, size int64) ([]httpRange, error) {
 			if err != nil || i < 0 {
 				return nil, errors.New("invalid range")
 			}
+
 			if i >= size {
 				// If the range begins after the size of the content,
 				// then it does not overlap.
 				noOverlap = true
 				continue
 			}
+
 			r.start = i
 			if end == "" {
 				// If no end is specified, range extends to end of the file.
@@ -935,7 +954,7 @@ func parseRange(s string, size int64) ([]httpRange, error) {
 			} else {
 				i, err := strconv.ParseInt(end, 10, 64)
 				if err != nil || r.start > i {
-					return nil, errors.New("invalid range")
+					return nil, errInvalidRange
 				}
 				if i >= size {
 					i = size - 1
@@ -945,9 +964,11 @@ func parseRange(s string, size int64) ([]httpRange, error) {
 		}
 		ranges = append(ranges, r)
 	}
+
 	if noOverlap && len(ranges) == 0 {
 		// The specified ranges did not overlap with the content.
 		return nil, errNoOverlap
 	}
+
 	return ranges, nil
 }

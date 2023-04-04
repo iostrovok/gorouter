@@ -1,7 +1,6 @@
 package gorouter
 
 import (
-	"fmt"
 	"os"
 	"regexp"
 	"strings"
@@ -57,11 +56,6 @@ func (server *Server) StaticFile(filePath, urlPath string, sets ...*HandlerSet) 
 		set = Set("static for '" + urlPath + "'")
 	}
 
-	fmt.Printf("MethodGetHead: %+v\n\n", MethodGetHead)
-	fmt.Printf("pathReg: %+v\n\n", pathReg)
-	fmt.Printf("h: %+v\n\n", h)
-	fmt.Printf("set: %+v\n\n", set)
 	server.AddReg(MethodGetHead, pathReg, h, set)
-
 	return nil
 }

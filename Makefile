@@ -29,6 +29,12 @@ test-top: ## Run tests
 	go tool cover -html=coverage.out -o coverage.html
 	rm coverage.out
 
+test-text: ## Run text tests
+	rm -f coverage.text.out coverage.text.html
+	go test -cover -coverprofile=$(PWD)/coverage.text.out ./internal/text
+	go tool cover -html=coverage.text.out -o coverage.text.html
+	rm coverage.text.out
+
 # full cleaning. Don't use it: it removes outside golang packages for all projects
 clean: ## Remove build artifacts
 	@echo "======================================================================"
@@ -78,4 +84,4 @@ mock:
 	./bin/mockgen -package mmock -source=./internal/cache/spm/cache.go > ./internal/cache/spm/mmock/spm_cache_mock.go
 
 example3:
-	cd ./cmd/example_3 && go run ./main.go
+	cd ./examples/example_3 && go run ./main.go

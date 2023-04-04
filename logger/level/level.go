@@ -79,8 +79,7 @@ func Parse(lvl string) (Level, error) {
 		return TraceLevel, nil
 	}
 
-	var l Level
-	return l, fmt.Errorf("not a valid logrus SetLevel: %q", lvl)
+	return -1, fmt.Errorf("not a valid logrus SetLevel: %q", lvl)
 }
 
 func (level Level) Byte() ([]byte, error) {

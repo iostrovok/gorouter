@@ -76,3 +76,4 @@ not_found_es.txt
 _download
 .history
 collector
+coverage.*
