@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/valyala/fasthttp"
@@ -185,6 +186,15 @@ func (ctx *Context) PeekParam(key string) []byte {
 
 func (ctx *Context) PeekStringParam(key string) string {
 	return string(ctx.PeekParam(key))
+}
+
+func (ctx *Context) PeekBoolParam(key string) bool {
+	switch strings.ToLower(ctx.PeekStringParam(key)) {
+	case "", "0", "f", "false":
+		return false
+	}
+
+	return true
 }
 
 func (ctx *Context) SqueezeParams() map[string]any {
