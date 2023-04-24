@@ -20,6 +20,7 @@ import (
 func (server *Server) Run(ctx context.Context, add string, addr ...string) error {
 	address := resolveAddress(append([]string{add}, addr...))
 	ln, err := net.Listen("tcp", address)
+
 	if err != nil {
 		return err
 	}
@@ -61,6 +62,9 @@ func (server *Server) Run(ctx context.Context, add string, addr ...string) error
 	})
 
 	errGroup.Go(func() error {
+		if server.certFile != "" && server.keyFile != "" {
+			return server.srv.ServeTLS(ln, server.certFile, server.keyFile)
+		}
 		return server.srv.Serve(ln)
 	})
 
@@ -102,7 +106,7 @@ func (server *Server) runHTTP(fastCtx *fasthttp.RequestCtx) (*Context, error) {
 	ctx.SetLogger(lg).SetLoggerLevel(server.logConfig.Level())
 
 	err = set.HandlerSet.Run(ctx)
-	if ctx.IsAborted {
+	if ctx.isAborted {
 		return ctx, err
 	}
 

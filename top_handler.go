@@ -41,8 +41,10 @@ func (set *HandlerSet) Run(context *Context) error {
 		}
 	}
 
-	if err := set.handler.Run(context); err != nil {
-		return err
+	if !context.isSkippedMain {
+		if err := set.handler.Run(context); err != nil {
+			return err
+		}
 	}
 
 	if context.Stopped() {

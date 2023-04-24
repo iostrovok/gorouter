@@ -31,6 +31,9 @@ type Server struct {
 	shutdownTimeOut int
 
 	serverName string
+
+	certFile string
+	keyFile  string
 }
 
 func New() *Server {
@@ -56,6 +59,12 @@ func (server *Server) ServerName() string {
 
 func (server *Server) SetServerName(name string) *Server {
 	server.serverName = name
+	return server
+}
+
+func (server *Server) SetServerTLS(certFile, keyFile string) *Server {
+	server.certFile = certFile
+	server.keyFile = keyFile
 	return server
 }
 

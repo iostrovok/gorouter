@@ -45,9 +45,13 @@ type Context struct {
 
 	urlIDs *fasthttp.Args // income  url params
 
-	data      map[string]any
-	IsStopped bool
-	IsAborted bool
+	data map[string]any
+	// isStopped doesn't call all next handlers
+	isStopped bool
+	// isAborted is the same as isStopped but cancel request context too. It's useful for security requests.
+	isAborted bool
+	// isSkippedMain doesn't call main handler, but calls "before" and "after" handlers
+	isSkippedMain bool
 
 	logger *logger.Logger
 
@@ -227,15 +231,25 @@ func (ctx *Context) SetSameSite(sameSite fasthttp.CookieSameSite) *Context {
 	return ctx
 }
 
+// Stop stops calling all next handlers
 func (ctx *Context) Stop() *Context {
-	ctx.IsStopped = true
+	ctx.isStopped = true
 	ctx.logger.AddDebug("is_stopped", true)
 
 	return ctx
 }
 
+// SkipMain skips the calling of main handler, but calls "before" and "after" handlers
+func (ctx *Context) SkipMain() *Context {
+	ctx.isSkippedMain = true
+	ctx.logger.AddDebug("is_skipped_main", true)
+
+	return ctx
+}
+
+// Abort is the same as Stop function, but cancel request context too. It's useful for security requests.
 func (ctx *Context) Abort() *Context {
-	ctx.IsAborted = true
+	ctx.isAborted = true
 	ctx.cancel()
 
 	ctx.logger.AddDebug("is_aborted", true)
@@ -243,8 +257,12 @@ func (ctx *Context) Abort() *Context {
 	return ctx
 }
 
+func (ctx *Context) Aborted() bool {
+	return ctx.isAborted
+}
+
 func (ctx *Context) Stopped() bool {
-	return ctx.IsAborted || ctx.IsStopped
+	return ctx.isAborted || ctx.isStopped
 }
 
 func (ctx *Context) Debugf(format string, data ...any) {
