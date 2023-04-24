@@ -8,8 +8,8 @@ import (
 	"github.com/iostrovok/gorouter/logger/level"
 )
 
-func (l *Logger) Log(level level.Level) {
-	if level > l.config.Level() {
+func (l *Logger) Log(lvl level.Level) {
+	if lvl > l.config.Level() {
 		return
 	}
 
@@ -31,13 +31,13 @@ func (l *Logger) Log(level level.Level) {
 	}
 }
 
-func (l *Logger) Logf(level level.Level, format string, data ...any) {
-	if level > l.config.Level() {
+func (l *Logger) Logf(lvl level.Level, format string, data ...any) {
+	if lvl > l.config.Level() {
 		return
 	}
 
 	l.Fields = l.Fields.message(config.MessageField, format, data...)
-	l.Log(level)
+	l.Log(lvl)
 }
 
 func (l *Logger) Tracef(format string, data ...any) {

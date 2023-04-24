@@ -59,6 +59,8 @@ type Context struct {
 	eg         *errgroup.Group
 	requestCtx context.Context
 	cancel     context.CancelFunc
+
+	handleDebugPipeline []string
 }
 
 func NewContext(baseCtx context.Context, fastCtx *fasthttp.RequestCtx, args *fasthttp.Args) (*Context, error) {
@@ -66,16 +68,17 @@ func NewContext(baseCtx context.Context, fastCtx *fasthttp.RequestCtx, args *fas
 	eg, ctx := errgroup.WithContext(cCtx)
 
 	out := &Context{
-		fastCtx:    fastCtx,
-		requestCtx: ctx,
-		baseCtx:    baseCtx,
-		data:       map[string]any{},
-		sameSite:   fasthttp.CookieSameSiteDisabled,
-		cancel:     cancel,
-		urlIDs:     args,
-		logger:     logger.New(),
-		uniqId:     crc64.Checksum([]byte(strconv.FormatInt(time.Now().UnixNano(), 10)+string(fastCtx.Path())), table),
-		eg:         eg,
+		fastCtx:             fastCtx,
+		requestCtx:          ctx,
+		baseCtx:             baseCtx,
+		data:                map[string]any{},
+		sameSite:            fasthttp.CookieSameSiteDisabled,
+		cancel:              cancel,
+		urlIDs:              args,
+		logger:              logger.New(),
+		uniqId:              crc64.Checksum([]byte(strconv.FormatInt(time.Now().UnixNano(), 10)+string(fastCtx.Path())), table),
+		eg:                  eg,
+		handleDebugPipeline: []string{},
 	}
 
 	return out, nil
@@ -133,8 +136,8 @@ func (ctx *Context) Logger() *logger.Logger {
 	return ctx.logger
 }
 
-func (ctx *Context) SetLoggerLevel(l level.Level) *Context {
-	ctx.logger.Level(l)
+func (ctx *Context) SetLoggerLevel(lvl level.Level) *Context {
+	ctx.logger.Level(lvl)
 
 	return ctx
 }
@@ -377,3 +380,21 @@ func (ctx *Context) EGSetLimit(n int) {
 //
 //	http.FileServer(http.FS(f)).ServeHTTP(ctx.writer, r)
 //}
+
+// AddDebugHandleName collects the names of the handlers that were called
+func (ctx *Context) AddDebugHandleName(name string) *Context {
+	if ctx.logger.IsDebug() {
+		ctx.handleDebugPipeline = append(ctx.handleDebugPipeline, name)
+	}
+
+	return ctx
+}
+
+// CalledHandles is a simple getter
+func (ctx *Context) CalledHandles() []string {
+	if !ctx.logger.IsDebug() {
+		return []string{"available in debug mode only"}
+	}
+
+	return ctx.handleDebugPipeline
+}
