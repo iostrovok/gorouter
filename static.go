@@ -19,6 +19,10 @@ func (h *StaticFileHandler) Init(_ *Context) error {
 	return nil
 }
 
+func (h *StaticFileHandler) Name() string {
+	return "StaticFileHandler"
+}
+
 func (h *StaticFileHandler) Run(ctx *Context) error {
 	old := string(ctx.fastCtx.Path())
 	defer func() {
