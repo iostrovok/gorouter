@@ -137,13 +137,13 @@ func (ctx *Context) Logger() *logger.Logger {
 }
 
 func (ctx *Context) SetLoggerLevel(lvl level.Level) *Context {
-	ctx.logger.Level(lvl)
+	ctx.logger.SetLevel(lvl)
 
 	return ctx
 }
 
 func (ctx *Context) LoggerLevel() level.Level {
-	return ctx.logger.Config().Level()
+	return ctx.logger.Level()
 }
 
 // RCtx returns "local" context from request.
