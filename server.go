@@ -3,6 +3,7 @@ package gorouter
 import (
 	"context"
 	"io"
+	"net"
 	"os"
 	"regexp"
 
@@ -21,8 +22,9 @@ type Server struct {
 
 	srv *fasthttp.Server
 
-	tree    *Tree
-	regTree *RegTree
+	tree     *Tree
+	baseAuth *BaseAuth
+	regTree  *RegTree
 
 	logConfig *config.Config
 	initCtx   InitCtx
@@ -32,6 +34,7 @@ type Server struct {
 
 	serverName string
 
+	listener net.Listener
 	certFile string
 	keyFile  string
 }
@@ -41,6 +44,7 @@ func New() *Server {
 		tree:      newTree(),
 		regTree:   newRegTree(),
 		logConfig: config.NewConfig(),
+		baseAuth:  NewBaseAuth(),
 	}
 }
 
@@ -50,6 +54,16 @@ func (server *Server) Server() *fasthttp.Server {
 
 func (server *Server) SetServer(srv *fasthttp.Server) *Server {
 	server.srv = srv
+	return server
+}
+
+func (server *Server) SetBaseAuth(baseAuth *BaseAuth) *Server {
+	server.baseAuth = baseAuth
+	return server
+}
+
+func (server *Server) SetListener(listener net.Listener) *Server {
+	server.listener = listener
 	return server
 }
 

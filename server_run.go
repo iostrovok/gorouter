@@ -2,6 +2,7 @@ package gorouter
 
 import (
 	"context"
+	"crypto/tls"
 	"log"
 	"net"
 	"os"
@@ -18,11 +19,13 @@ import (
 
 // Run starts the server. it the main function of the server.
 func (server *Server) Run(ctx context.Context, add string, addr ...string) error {
-	address := resolveAddress(append([]string{add}, addr...))
-	ln, err := net.Listen("tcp", address)
-
-	if err != nil {
-		return err
+	if server.listener == nil {
+		address := resolveAddress(append([]string{add}, addr...))
+		ln, err := net.Listen("tcp", address)
+		if err != nil {
+			return err
+		}
+		server.listener = ln
 	}
 
 	errGroup, errCtx := errgroup.WithContext(ctx)
@@ -63,18 +66,45 @@ func (server *Server) Run(ctx context.Context, add string, addr ...string) error
 
 	errGroup.Go(func() error {
 		if server.certFile != "" && server.keyFile != "" {
-			return server.srv.ServeTLS(ln, server.certFile, server.keyFile)
+			cert, err := tls.LoadX509KeyPair(server.certFile, server.keyFile)
+			if err != nil {
+				return errors.Errorf("cannot load TLS certificate from certFile=%q, keyFile=%q: %v", server.certFile, server.keyFile, err)
+			}
+
+			serverTLSConfig := &tls.Config{
+				Certificates:             []tls.Certificate{cert},
+				PreferServerCipherSuites: true,
+				CurvePreferences:         []tls.CurveID{},
+				//ServerName:
+			}
+
+			server.listener = tls.NewListener(server.listener, serverTLSConfig)
 		}
-		return server.srv.Serve(ln)
+
+		return server.srv.Serve(server.listener)
 	})
 
 	return errGroup.Wait()
 }
 
-func (server *Server) ServeHTTP(fastCtx *fasthttp.RequestCtx) {
-	if _, err := server.runHTTP(fastCtx); err != nil {
-		log.Println(err.Error())
+func printError(fastCtx *fasthttp.RequestCtx, err error) {
+	if err != nil {
+		log.Printf("[%s] %s\n", fastCtx.RemoteAddr().String(), err.Error())
 	}
+}
+
+func (server *Server) ServeHTTP(fastCtx *fasthttp.RequestCtx) {
+	if server.baseAuth.Use() {
+		success, err := server.baseAuth.Check(fastCtx)
+		printError(fastCtx, err)
+
+		if !success {
+			return
+		}
+	}
+
+	_, err := server.runHTTP(fastCtx)
+	printError(fastCtx, err)
 }
 
 func (server *Server) runHTTP(fastCtx *fasthttp.RequestCtx) (*Context, error) {
@@ -86,7 +116,7 @@ func (server *Server) runHTTP(fastCtx *fasthttp.RequestCtx) (*Context, error) {
 	if !set.Find {
 		// TODO not found handler
 		fastCtx.Error("not found", fasthttp.StatusNotFound)
-		return nil, errors.New("path '" + path + "'+not found")
+		return nil, errors.New("path '" + path + "' not found")
 	}
 
 	ctx, err := NewContext(server.ctx, fastCtx, urlIDsArgs)
