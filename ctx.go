@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/valyala/fasthttp"
@@ -45,15 +46,21 @@ type Context struct {
 
 	urlIDs *fasthttp.Args // income  url params
 
-	data      map[string]any
-	IsStopped bool
-	IsAborted bool
+	data map[string]any
+	// isStopped doesn't call all next handlers
+	isStopped bool
+	// isAborted is the same as isStopped but cancel request context too. It's useful for security requests.
+	isAborted bool
+	// isSkippedMain doesn't call main handler, but calls "before" and "after" handlers
+	isSkippedMain bool
 
 	logger *logger.Logger
 
 	eg         *errgroup.Group
 	requestCtx context.Context
 	cancel     context.CancelFunc
+
+	handleDebugPipeline []string
 }
 
 func NewContext(baseCtx context.Context, fastCtx *fasthttp.RequestCtx, args *fasthttp.Args) (*Context, error) {
@@ -61,16 +68,17 @@ func NewContext(baseCtx context.Context, fastCtx *fasthttp.RequestCtx, args *fas
 	eg, ctx := errgroup.WithContext(cCtx)
 
 	out := &Context{
-		fastCtx:    fastCtx,
-		requestCtx: ctx,
-		baseCtx:    baseCtx,
-		data:       map[string]any{},
-		sameSite:   fasthttp.CookieSameSiteDisabled,
-		cancel:     cancel,
-		urlIDs:     args,
-		logger:     logger.New(),
-		uniqId:     crc64.Checksum([]byte(strconv.FormatInt(time.Now().UnixNano(), 10)+string(fastCtx.Path())), table),
-		eg:         eg,
+		fastCtx:             fastCtx,
+		requestCtx:          ctx,
+		baseCtx:             baseCtx,
+		data:                map[string]any{},
+		sameSite:            fasthttp.CookieSameSiteDisabled,
+		cancel:              cancel,
+		urlIDs:              args,
+		logger:              logger.New(),
+		uniqId:              crc64.Checksum([]byte(strconv.FormatInt(time.Now().UnixNano(), 10)+string(fastCtx.Path())), table),
+		eg:                  eg,
+		handleDebugPipeline: []string{},
 	}
 
 	return out, nil
@@ -128,14 +136,14 @@ func (ctx *Context) Logger() *logger.Logger {
 	return ctx.logger
 }
 
-func (ctx *Context) SetLoggerLevel(l level.Level) *Context {
-	ctx.logger.Level(l)
+func (ctx *Context) SetLoggerLevel(lvl level.Level) *Context {
+	ctx.logger.SetLevel(lvl)
 
 	return ctx
 }
 
 func (ctx *Context) LoggerLevel() level.Level {
-	return ctx.logger.Config().Level()
+	return ctx.logger.Level()
 }
 
 // RCtx returns "local" context from request.
@@ -183,6 +191,15 @@ func (ctx *Context) PeekStringParam(key string) string {
 	return string(ctx.PeekParam(key))
 }
 
+func (ctx *Context) PeekBoolParam(key string) bool {
+	switch strings.ToLower(ctx.PeekStringParam(key)) {
+	case "", "0", "f", "false":
+		return false
+	}
+
+	return true
+}
+
 func (ctx *Context) SqueezeParams() map[string]any {
 	out := map[string]any{}
 
@@ -227,15 +244,25 @@ func (ctx *Context) SetSameSite(sameSite fasthttp.CookieSameSite) *Context {
 	return ctx
 }
 
+// Stop stops calling all next handlers
 func (ctx *Context) Stop() *Context {
-	ctx.IsStopped = true
+	ctx.isStopped = true
 	ctx.logger.AddDebug("is_stopped", true)
 
 	return ctx
 }
 
+// SkipMain skips the calling of main handler, but calls "before" and "after" handlers
+func (ctx *Context) SkipMain() *Context {
+	ctx.isSkippedMain = true
+	ctx.logger.AddDebug("is_skipped_main", true)
+
+	return ctx
+}
+
+// Abort is the same as Stop function, but cancel request context too. It's useful for security requests.
 func (ctx *Context) Abort() *Context {
-	ctx.IsAborted = true
+	ctx.isAborted = true
 	ctx.cancel()
 
 	ctx.logger.AddDebug("is_aborted", true)
@@ -243,8 +270,12 @@ func (ctx *Context) Abort() *Context {
 	return ctx
 }
 
+func (ctx *Context) Aborted() bool {
+	return ctx.isAborted
+}
+
 func (ctx *Context) Stopped() bool {
-	return ctx.IsAborted || ctx.IsStopped
+	return ctx.isAborted || ctx.isStopped
 }
 
 func (ctx *Context) Debugf(format string, data ...any) {
@@ -349,3 +380,21 @@ func (ctx *Context) EGSetLimit(n int) {
 //
 //	http.FileServer(http.FS(f)).ServeHTTP(ctx.writer, r)
 //}
+
+// AddDebugHandleName collects the names of the handlers that were called
+func (ctx *Context) AddDebugHandleName(name string) *Context {
+	if ctx.logger.IsDebug() {
+		ctx.handleDebugPipeline = append(ctx.handleDebugPipeline, name)
+	}
+
+	return ctx
+}
+
+// CalledHandles is a simple getter
+func (ctx *Context) CalledHandles() []string {
+	if !ctx.logger.IsDebug() {
+		return []string{"available in debug mode only"}
+	}
+
+	return ctx.handleDebugPipeline
+}

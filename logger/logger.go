@@ -95,8 +95,16 @@ func (l *Logger) Writer(writer io.Writer) *Logger {
 	return l
 }
 
-func (l *Logger) Level(level level.Level) *Logger {
-	l.config.SetLevel(level)
+func (l *Logger) IsDebug() bool {
+	return l.config.Level() >= level.DebugLevel
+}
+
+func (l *Logger) Level() level.Level {
+	return l.config.Level()
+}
+
+func (l *Logger) SetLevel(lvl level.Level) *Logger {
+	l.config.SetLevel(lvl)
 	return l
 }
 

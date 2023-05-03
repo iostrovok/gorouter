@@ -52,8 +52,8 @@ var AllLevelsString = []string{
 }
 
 // String converts the Level to a string. E.g. PanicLevel becomes "panic".
-func (level Level) String() string {
-	if b, err := level.Byte(); err == nil {
+func (lvl Level) String() string {
+	if b, err := lvl.Byte(); err == nil {
 		return string(b)
 	}
 
@@ -82,10 +82,10 @@ func Parse(lvl string) (Level, error) {
 	return -1, fmt.Errorf("not a valid logrus SetLevel: %q", lvl)
 }
 
-func (level Level) Byte() ([]byte, error) {
-	if MaxLevelNumber >= level && level > -1 {
-		return []byte(AllLevelsString[level]), nil
+func (lvl Level) Byte() ([]byte, error) {
+	if MaxLevelNumber >= lvl && lvl > -1 {
+		return []byte(AllLevelsString[lvl]), nil
 	}
 
-	return nil, fmt.Errorf("not a valid logrus level %d", level)
+	return nil, fmt.Errorf("not a valid logrus level %d", lvl)
 }
