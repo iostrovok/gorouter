@@ -10,27 +10,37 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
+// BaseAuthLogFunction is a function to log the authorization results
 type BaseAuthLogFunction func(fastCtx *fasthttp.RequestCtx, user, password string, success bool)
+
+// BaseAuthAccess is a function to check need to check access or not
+type BaseAuthAccess func(fastCtx *fasthttp.RequestCtx) bool
+
+func emptyAccess(_ *fasthttp.RequestCtx) bool {
+	return true
+}
 
 // BaseAuth checks user authorization
 type BaseAuth struct {
-	use        bool
-	message    string
-	charset    string
-	header     string
-	roles      map[string]string
-	useLogFunc bool
-	logFunc    BaseAuthLogFunction
+	use         bool
+	message     string
+	charset     string
+	header      string
+	roles       map[string]string
+	useLogFunc  bool
+	logFunc     BaseAuthLogFunction
+	checkAccess BaseAuthAccess
 }
 
 func NewBaseAuth() *BaseAuth {
 	return &BaseAuth{
 		// default values
-		use:     false,
-		roles:   map[string]string{},
-		charset: "UTF-8",
-		message: "Access to the staging site",
-		header:  `Basic realm="Access to the staging site", charset="UTF-8"`,
+		use:         false,
+		roles:       map[string]string{},
+		charset:     "UTF-8",
+		message:     "Access to the staging site",
+		header:      `Basic realm="Access to the staging site", charset="UTF-8"`,
+		checkAccess: emptyAccess,
 	}
 }
 
@@ -38,6 +48,11 @@ func (h *BaseAuth) SetMessage(message, charset string) *BaseAuth {
 	h.message = message
 	h.charset = charset
 	h.header = `Basic realm="` + h.message + `", charset="` + h.charset + `"`
+	return h
+}
+
+func (h *BaseAuth) SetCheckAccessFunc(checkAccess BaseAuthAccess) *BaseAuth {
+	h.checkAccess = checkAccess
 	return h
 }
 

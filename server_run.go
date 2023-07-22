@@ -94,7 +94,7 @@ func printError(fastCtx *fasthttp.RequestCtx, err error) {
 }
 
 func (server *Server) ServeHTTP(fastCtx *fasthttp.RequestCtx) {
-	if server.baseAuth.Use() {
+	if server.baseAuth.Use() && server.baseAuth.checkAccess(fastCtx) {
 		success, err := server.baseAuth.Check(fastCtx)
 		printError(fastCtx, err)
 
