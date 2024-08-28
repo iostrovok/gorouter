@@ -187,6 +187,32 @@ func (ctx *Context) PeekParam(key string) []byte {
 	return ctx.fastCtx.PostArgs().Peek(key)
 }
 
+func (ctx *Context) PeekMultiParam(key string) [][]byte {
+	if out := ctx.urlIDs.PeekMulti(key); len(out) > 0 {
+		return out
+	}
+
+	if out := ctx.urlIDs.PeekMulti(key); len(out) > 0 {
+		return out
+	}
+
+	if out := ctx.fastCtx.QueryArgs().PeekMulti(key); len(out) > 0 {
+		return out
+	}
+
+	return ctx.fastCtx.PostArgs().PeekMulti(key)
+}
+
+func (ctx *Context) PeekMultiStringParam(key string) []string {
+	var out []string
+
+	for _, v := range ctx.PeekMultiParam(key) {
+		out = append(out, string(v))
+	}
+
+	return out
+}
+
 func (ctx *Context) PeekStringParam(key string) string {
 	return string(ctx.PeekParam(key))
 }
