@@ -26,14 +26,14 @@ func (set *HandlerSet) Run(context *Context) error {
 	defer set.RUnlock()
 
 	// set up init
-	context.AddDebugHandleName(set.handler.Name())
+	context.AddDebugHandleName(set.handler.Name() + " [init]")
 	if err := set.handler.Init(context); err != nil {
 		return err
 	}
 
 	totalBefore := len(set.before)
 	for i := 0; i < totalBefore; i++ {
-		context.AddDebugHandleName(set.before[i].Name())
+		context.AddDebugHandleName(set.before[i].Name() + " [run]")
 		if err := set.before[i].Run(context); err != nil {
 			return err
 		}
@@ -44,7 +44,7 @@ func (set *HandlerSet) Run(context *Context) error {
 	}
 
 	if !context.isSkippedMain {
-		context.AddDebugHandleName(set.handler.Name())
+		context.AddDebugHandleName(set.handler.Name() + " [run]")
 		if err := set.handler.Run(context); err != nil {
 			return err
 		}
@@ -56,7 +56,7 @@ func (set *HandlerSet) Run(context *Context) error {
 
 	totalAfter := len(set.after)
 	for i := 0; i < totalAfter; i++ {
-		context.AddDebugHandleName(set.after[i].Name())
+		context.AddDebugHandleName(set.after[i].Name() + " [run]")
 		if err := set.after[i].Run(context); err != nil {
 			return err
 		}

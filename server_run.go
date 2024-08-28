@@ -114,7 +114,6 @@ func (server *Server) runHTTP(fastCtx *fasthttp.RequestCtx) (*Context, error) {
 	path := string(fastCtx.Path())
 	set := server.Find(Method(fastCtx.Method()), path, urlIDsArgs)
 	if !set.Find {
-		// TODO not found handler
 		fastCtx.Error("not found", fasthttp.StatusNotFound)
 		return nil, errors.New("path '" + path + "' not found")
 	}
