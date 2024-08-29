@@ -1,13 +1,13 @@
 module github.com/iostrovok/gorouter
 
-go 1.19
+go 1.21.3
 
 require (
 	github.com/json-iterator/go v1.1.12
 	github.com/pkg/errors v0.9.1
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.9.0
 	github.com/valyala/fasthttp v1.47.0
-	golang.org/x/sync v0.1.0
+	golang.org/x/sync v0.8.0
 )
 
 require (

@@ -19,6 +19,7 @@ install: mod  ## Run installing
 test: ## Run tests
 	rm -f coverage.out coverage.html
 	go test -cover -coverprofile=$(PWD)/coverage.out ./...
+	#go test -race -cover -coverprofile=$(PWD)/coverage.out ./...
 	go tool cover -html=coverage.out -o coverage.html
 	rm coverage.out
 

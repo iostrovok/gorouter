@@ -51,9 +51,10 @@ func (server *Server) Run(ctx context.Context, add string, addr ...string) error
 			// global (main) context is done. Stop.
 			var err error
 			if server.shutdownTimeOut > 0 {
-				ctx, _ := context.WithTimeout(context.Background(), //nolint:govet
+				ctx, cancel := context.WithTimeout(context.Background(), //nolint:govet
 					time.Duration(server.shutdownTimeOut)*time.Millisecond)
 				err = server.srv.ShutdownWithContext(ctx)
+				cancel()
 			} else {
 				err = server.srv.Shutdown()
 			}
