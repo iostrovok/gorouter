@@ -64,6 +64,5 @@ func TestServer_1(t *testing.T) {
 	//cancel()
 	assert.Nil(t, wg.Wait())
 
-	assert.Nil(t, g.Server().Shutdown())
-
+	assert.Nil(t, g.Shutdown())
 }

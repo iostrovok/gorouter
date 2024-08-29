@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -56,8 +57,9 @@ func (server *Server) Run(ctx context.Context, add string, addr ...string) error
 				err = server.srv.ShutdownWithContext(ctx)
 				cancel()
 			} else {
-				err = server.srv.Shutdown()
+				err = server.Shutdown()
 			}
+
 			return errors.Wrap(err, context.Canceled.Error())
 		case sig := <-ch:
 			// We received an interrupt signal, shut down.
@@ -92,6 +94,19 @@ func printError(fastCtx *fasthttp.RequestCtx, err error) {
 	if err != nil {
 		log.Printf("[%s] %s\n", fastCtx.RemoteAddr().String(), err.Error())
 	}
+}
+
+// Shutdown is a wrapper over fasthttp.Server.Shutdown
+func (server *Server) Shutdown() error {
+	// run Shutdown only one time
+	server.shutdownMutex.Lock()
+	defer server.shutdownMutex.Unlock()
+
+	if atomic.AddInt64(server.shutdownLocker, 1) != 1 {
+		return nil
+	}
+
+	return server.srv.Shutdown()
 }
 
 func (server *Server) ServeHTTP(fastCtx *fasthttp.RequestCtx) {
