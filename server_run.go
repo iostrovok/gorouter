@@ -121,6 +121,7 @@ func (server *Server) runHTTP(fastCtx *fasthttp.RequestCtx) (*Context, error) {
 	}
 
 	ctx, err := NewContext(server.ctx, fastCtx, urlIDsArgs)
+	defer ctx.cancel()
 	if err != nil {
 		fastCtx.Error("not found", fasthttp.StatusBadRequest)
 		return nil, errors.New("path '" + path + "': " + err.Error())
@@ -129,6 +130,7 @@ func (server *Server) runHTTP(fastCtx *fasthttp.RequestCtx) (*Context, error) {
 	// add to context additional data
 	if server.initCtx != nil {
 		if err := server.initCtx(ctx); err != nil {
+
 			return nil, errors.New("path '" + path + "': " + err.Error())
 		}
 	}
