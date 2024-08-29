@@ -50,9 +50,10 @@ func TestServer_1(t *testing.T) {
 	routerB.Use(MethodGet, "/", newIH("for MethodGet '/'"))
 	routerB.Use(MethodGet, "/a", newIH("for MethodGet '/a'"))
 
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*1)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
 	wg, ctxEr := errgroup.WithContext(ctx)
 	wg.Go(func() error {
+		defer cancel()
 		return g.Run(ctxEr, ":8081")
 	})
 
@@ -63,5 +64,5 @@ func TestServer_1(t *testing.T) {
 	//cancel()
 	assert.Nil(t, wg.Wait())
 
-	assert.Nil(t, g.Server().Shutdown())
+	assert.Nil(t, g.Shutdown())
 }

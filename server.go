@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"regexp"
+	"sync"
 
 	"github.com/valyala/fasthttp"
 
@@ -17,6 +18,9 @@ import (
 type InitCtx func(ctx *Context) error
 
 type Server struct {
+	shutdownMutex  sync.Mutex
+	shutdownLocker *int64
+
 	ctx context.Context
 	//ln  net.Listener
 
@@ -41,10 +45,12 @@ type Server struct {
 
 func New() *Server {
 	return &Server{
-		tree:      newTree(),
-		regTree:   newRegTree(),
-		logConfig: config.NewConfig(),
-		baseAuth:  NewBaseAuth(),
+		shutdownMutex:  sync.Mutex{},
+		shutdownLocker: new(int64),
+		tree:           newTree(),
+		regTree:        newRegTree(),
+		logConfig:      config.NewConfig(),
+		baseAuth:       NewBaseAuth(),
 	}
 }
 

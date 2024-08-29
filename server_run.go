@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -51,12 +52,14 @@ func (server *Server) Run(ctx context.Context, add string, addr ...string) error
 			// global (main) context is done. Stop.
 			var err error
 			if server.shutdownTimeOut > 0 {
-				ctx, _ := context.WithTimeout(context.Background(), //nolint:govet
+				ctx, cancel := context.WithTimeout(context.Background(), //nolint:govet
 					time.Duration(server.shutdownTimeOut)*time.Millisecond)
 				err = server.srv.ShutdownWithContext(ctx)
+				cancel()
 			} else {
-				err = server.srv.Shutdown()
+				err = server.Shutdown()
 			}
+
 			return errors.Wrap(err, context.Canceled.Error())
 		case sig := <-ch:
 			// We received an interrupt signal, shut down.
@@ -93,6 +96,19 @@ func printError(fastCtx *fasthttp.RequestCtx, err error) {
 	}
 }
 
+// Shutdown is a wrapper over fasthttp.Server.Shutdown
+func (server *Server) Shutdown() error {
+	// run Shutdown only one time
+	server.shutdownMutex.Lock()
+	defer server.shutdownMutex.Unlock()
+
+	if atomic.AddInt64(server.shutdownLocker, 1) != 1 {
+		return nil
+	}
+
+	return server.srv.Shutdown()
+}
+
 func (server *Server) ServeHTTP(fastCtx *fasthttp.RequestCtx) {
 	if server.baseAuth.Use() && server.baseAuth.checkAccess(fastCtx) {
 		success, err := server.baseAuth.Check(fastCtx)
@@ -120,6 +136,7 @@ func (server *Server) runHTTP(fastCtx *fasthttp.RequestCtx) (*Context, error) {
 	}
 
 	ctx, err := NewContext(server.ctx, fastCtx, urlIDsArgs)
+	defer ctx.cancel()
 	if err != nil {
 		fastCtx.Error("not found", fasthttp.StatusBadRequest)
 		return nil, errors.New("path '" + path + "': " + err.Error())
@@ -128,6 +145,7 @@ func (server *Server) runHTTP(fastCtx *fasthttp.RequestCtx) (*Context, error) {
 	// add to context additional data
 	if server.initCtx != nil {
 		if err := server.initCtx(ctx); err != nil {
+
 			return nil, errors.New("path '" + path + "': " + err.Error())
 		}
 	}
