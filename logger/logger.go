@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"fmt"
 	"io"
 	"sync"
 	"time"
@@ -68,6 +69,17 @@ func (l *Logger) Add(key string, value any) *Logger {
 	defer l.Unlock()
 
 	l.Fields[key] = value
+	return l
+}
+
+func (l *Logger) AddDebugf(key, format string, value any) *Logger {
+	l.Lock()
+	defer l.Unlock()
+
+	if l.config.Level() >= level.DebugLevel {
+		l.Fields[key] = fmt.Sprintf(format, value)
+	}
+
 	return l
 }
 
