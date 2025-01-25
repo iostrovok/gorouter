@@ -192,10 +192,6 @@ func (ctx *Context) PeekMultiParam(key string) [][]byte {
 		return out
 	}
 
-	if out := ctx.urlIDs.PeekMulti(key); len(out) > 0 {
-		return out
-	}
-
 	if out := ctx.fastCtx.QueryArgs().PeekMulti(key); len(out) > 0 {
 		return out
 	}
