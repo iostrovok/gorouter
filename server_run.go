@@ -99,9 +99,6 @@ func printError(fastCtx *fasthttp.RequestCtx, err error) {
 // Shutdown is a wrapper over fasthttp.Server.Shutdown
 func (server *Server) Shutdown() error {
 	// run Shutdown only one time
-	server.shutdownMutex.Lock()
-	defer server.shutdownMutex.Unlock()
-
 	if atomic.AddInt64(server.shutdownLocker, 1) != 1 {
 		return nil
 	}
